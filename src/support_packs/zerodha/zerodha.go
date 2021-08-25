@@ -3,6 +3,7 @@ package zerodha
 import (
 	"fmt"
 	kiteconnect "github.com/zerodha/gokiteconnect/v4"
+	"stockify-api/src/support_packs/firestore"
 )
 
 const (
@@ -43,5 +44,6 @@ func Login() {
 
 func Init() {
 	Login()
+	firestore.Init()
 	StartKiteTicker()
 }
