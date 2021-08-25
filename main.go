@@ -5,6 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"os"
+	"path/filepath"
+	"stockify-api/config"
 	"stockify-api/src/constants"
 	"stockify-api/src/logger"
 	"stockify-api/src/server"
@@ -20,7 +22,12 @@ func main() {
 	flag.Parse()
 
 	// Initialize app configs constants
-	//appConfig := config.Init(*environment)
+	appConfig := config.Init(*environment)
+
+	// set path of google cache file
+	cachePath := appConfig.Get(config.GoogleApplicationCredentials).(string)
+	jsonFile, _ := filepath.Abs(cachePath)
+	os.Setenv(config.GoogleApplicationCredentials, jsonFile)
 
 	//set gin mode (debug or release)
 	if *environment == constants.EnvProduction {
