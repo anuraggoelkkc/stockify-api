@@ -43,4 +43,5 @@ func Login() {
 
 func Init() {
 	Login()
+	StartKiteTicker()
 }
