@@ -48,34 +48,45 @@ func downloadInstrumentCSV(filepath string, url string) (err error) {
 	return nil
 }
 
-func updateFirebaseCollections() error {
+func getFirebaseClient(ctx context.Context) (*firestore.Client, error) {
+	// Use a service account
+	conf := &firebase.Config{ProjectID: "stockify-8407f"}
+	app, err := firebase.NewApp(ctx, conf)
+	if err != nil {
+		log.Panic(err)
+	}
+	client, err := app.Firestore(ctx)
+	if err != nil {
+		log.Panic(err)
+	}
+	return client, err
+}
+
+func UpdateFirebaseCollections() error {
+	//Download CSV
+	err := downloadInstrumentCSV("$HOME/stockify-api/instruments.csv","https://api.kite.trade/instruments")
+	if err != nil {
+		log.Panic(err)
+		return err
+	}
+
+	//Create Firebase client
 	ctx := context.Background()
 	client, err := getFirebaseClient(ctx)
 	defer client.Close()
-/*	_, _, err = client.Collection("instruments").Add(ctx, map[string]interface{}{
-		"Instrument_ID": 277876486,
-		"Exchange_ID":  1085455,
-		"Symbol":  "EURAPR22JUL22",
-		"Name": "EURINR",
-		"Price": 0,
-		"Exchange": "BCD",
-	})
-	if err != nil {
-		log.Panicf("Failed updating instruments collection: %v", err)
-	}
 
-	return err*/
-
-	//Open a File
+	//Open File
 	csv_file, err := os.Open("instruments.csv")
 	if err != nil {
 		log.Panic(err)
+		return err
 	}
 	defer csv_file.Close()
 	r := csv.NewReader(csv_file)
 	records, err := r.ReadAll()
 	if err != nil {
 		log.Panic(err)
+		return err
 	}
 
 	var instrument = &_struct.Instruments{}
@@ -102,49 +113,16 @@ func updateFirebaseCollections() error {
 				})
 				if err != nil {
 					log.Panicf("Failed updating instruments collection: %v", err)
+					return err
 				}
 			}
 
 		}
 	}
 
-	return err
-
-/*	_, _, err = client.Collection("intruments").Add(ctx, map[string]interface{}{
-		"instrument_token": 277876486,
-		"exchange_token":  1085455,
-		"tradingsymbol":  "EURAPR22JUL22",
-		"name": "EURINR",
-		"last_price": 0,
-	})
-	if err != nil {
-		log.Panic("Failed updating instruments collection: %v", err)
-	}
-	return err*/
-}
-
-func getFirebaseClient(ctx context.Context) (*firestore.Client, error) {
-	// Use a service account
-	conf := &firebase.Config{ProjectID: "stockify-8407f"}
-	app, err := firebase.NewApp(ctx, conf)
-	if err != nil {
-		log.Panic(err)
-	}
-	client, err := app.Firestore(ctx)
-	if err != nil {
-		log.Panic(err)
-	}
-	return client, err
+	return nil
 }
 
 func Init(){
-	err := downloadInstrumentCSV("$HOME/stockify-api/instruments.csv","https://api.kite.trade/instruments")
-	if err != nil {
-		log.Panic(err)
-	} else {
-		err := updateFirebaseCollections()
-		if err != nil {
-			log.Panic(err)
-		}
-	}
+	
 }

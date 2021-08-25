@@ -42,6 +42,10 @@ func Login() {
 	fmt.Println("margins: ", margins)
 }
 
+func ReloadInstrumentsInFirebase() error {
+	return firestore.UpdateFirebaseCollections()
+}
+
 func Init() {
 	Login()
 	firestore.Init()

@@ -8,3 +8,19 @@ type Instruments struct {
 	Price float64 `json:"last_price"`
 	Exchange string `json:"exchange"`
 }
+
+type User struct {
+	ID string `json:"user_id"`
+	Name string `json:"name"`
+	Email string `json:"mail"`
+	DeviceID string `json:"device_id"`
+}
+
+type Alert struct {
+	Instrument_ID string `json:"instrument_token"`
+	Exchange_ID string `json:"exchange_token"`
+	Price float64 `json:"target_price"`
+	Direction bool `json:"direction"`
+}
+
+type Trend struct {}

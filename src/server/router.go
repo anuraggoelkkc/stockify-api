@@ -45,6 +45,24 @@ func NewRouter() *gin.Engine {
 
 	router.Use(middlewares.AuthMiddleware())
 
+	user := new(handlers.UserHandler)
+
+	router.POST("/addUser", user.AddUser)
+
+	alert := new(handlers.AlertHandler)
+
+	router.POST("/addAlert", alert.AddAlert)
+
+	router.GET("/removeAlert", alert.RemoveAlert)
+
+	router.GET("/alertList", alert.AlertList)
+
+	metadata := new(handlers.MetadataHandler)
+
+	router.GET("/reloadInstruments", metadata.ReloadInstruments)
+
+	router.GET("/trendingList", metadata.TrendingInstruments)
+
 	return router
 
 }
