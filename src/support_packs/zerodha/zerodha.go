@@ -27,10 +27,10 @@ func GetAccessToken(client *kiteconnect.Client) string {
 	}
 }
 
-func Login(){
+func Login() {
 	// Create a new Kite connect instance
 	kc := kiteconnect.New(apiKey)
-	token := GetAccessToken(nil)//to generate new token pass kc instead of nil
+	token := GetAccessToken(nil) //to generate new token pass kc instead of nil
 	kc.SetAccessToken(token)
 
 	// Get margins
@@ -41,6 +41,6 @@ func Login(){
 	fmt.Println("margins: ", margins)
 }
 
-func Init(){
- Login()
+func Init() {
+	Login()
 }
