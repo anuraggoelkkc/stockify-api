@@ -1,7 +1,7 @@
 package server
 
 import (
-	"stockify-api/src/zerodha"
+	"stockify-api/src/support_packs/zerodha"
 )
 
 const PORT = ":80"
