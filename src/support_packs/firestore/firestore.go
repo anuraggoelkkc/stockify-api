@@ -62,6 +62,75 @@ func getFirebaseClient(ctx context.Context) (*firestore.Client, error) {
 	return client, err
 }
 
+func AddOrUpdateUser(u _struct.User) error {
+	//Create Firebase client
+	ctx := context.Background()
+	client, err := getFirebaseClient(ctx)
+	defer client.Close()
+
+	_, err = client.Collection("user").Doc(u.ID).Set(ctx, map[string]interface{}{
+		"ID": u.ID,
+		"Name": u.Name,
+		"Email": u.Email,
+		"DeviceID": u.DeviceID,
+	})
+	if err != nil {
+		log.Panicf("Failed adding/updating user: %v", err)
+		return err
+	}
+	return err
+}
+
+func FetchAlerts(u string) ([]_struct.Alert, error) {
+	//Create Firebase client
+	ctx := context.Background()
+	client, err := getFirebaseClient(ctx)
+	defer client.Close()
+
+	//Get Existing alerts for user
+	dsnap, err := client.Collection("user_alert").Doc(u).Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var existingAlerts []_struct.Alert
+	err = dsnap.DataTo(&existingAlerts)
+	fmt.Printf("Document data: %#v\n", existingAlerts)
+	return existingAlerts, err
+}
+
+func AddAlert(a _struct.Alert) error {
+	//Create Firebase client
+	ctx := context.Background()
+	client, err := getFirebaseClient(ctx)
+	defer client.Close()
+
+	//Get Existing alerts for user
+	dsnap, err := client.Collection("user_alert").Doc(a.User_ID).Get(ctx)
+	if err != nil {
+		return err
+	}
+	var existingAlerts []_struct.Alert
+	err = dsnap.DataTo(&existingAlerts)
+	fmt.Printf("Document data: %#v\n", existingAlerts)
+	if err != nil {
+		return err
+	}
+
+	//Add new alert to existing alert
+	existingAlerts = append(existingAlerts, a)
+
+	_, err = client.Collection("user_alert").Doc(a.User_ID).Set(ctx, map[string]interface{}{
+		"Alerts": existingAlerts,
+	})
+	if err != nil {
+		log.Panicf("Failed adding/updating alerts: %v", err)
+		return err
+	}
+	return err
+}
+
+//func RemoveAlert()
+
 func UpdateFirebaseCollections() error {
 	//Download CSV
 	err := downloadInstrumentCSV("$HOME/stockify-api/instruments.csv","https://api.kite.trade/instruments")
@@ -103,7 +172,7 @@ func UpdateFirebaseCollections() error {
 			instrument.Exchange = rec[11]
 
 			if len(instrument.Name) > 0 && (strings.EqualFold(instrument.Exchange, "BSE") || strings.EqualFold(instrument.Exchange, "NSE")) {
-				_, _, err = client.Collection("instruments").Add(ctx, map[string]interface{}{
+				_, err = client.Collection("instruments").Doc(instrument.Instrument_ID).Set(ctx, map[string]interface{}{
 					"Instrument_ID": instrument.Instrument_ID,
 					"Exchange_ID": instrument.Exchange_ID,
 					"Symbol": instrument.Symbol,
@@ -124,5 +193,5 @@ func UpdateFirebaseCollections() error {
 }
 
 func Init(){
-	
+	UpdateFirebaseCollections()
 }

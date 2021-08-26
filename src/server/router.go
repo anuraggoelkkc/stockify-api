@@ -53,9 +53,9 @@ func NewRouter() *gin.Engine {
 
 	router.POST("/addAlert", alert.AddAlert)
 
-	router.GET("/removeAlert", alert.RemoveAlert)
+	router.GET("/removeAlert/:userID", alert.RemoveAlert)
 
-	router.GET("/alertList", alert.AlertList)
+	router.GET("/alertList/:userID", alert.AlertList)
 
 	metadata := new(handlers.MetadataHandler)
 

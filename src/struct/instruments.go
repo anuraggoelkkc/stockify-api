@@ -17,6 +17,8 @@ type User struct {
 }
 
 type Alert struct {
+	ID string `json:"alert_id"`
+	User_ID string `json:"user_id"`
 	Instrument_ID string `json:"instrument_token"`
 	Exchange_ID string `json:"exchange_token"`
 	Price float64 `json:"target_price"`
