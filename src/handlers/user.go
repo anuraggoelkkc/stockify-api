@@ -16,8 +16,8 @@ func (u UserHandler) AddUser(c *gin.Context) {
 	fmt.Println("Endpoint Hit: AddUser")
 
 	var user _struct.User
-	if c.ShouldBind(&user) == nil && len(user.ID) > 0 {
-		log.Println(user.ID)
+	if c.ShouldBind(&user) == nil && len(user.Id) > 0 {
+		log.Println(user.Id)
 		log.Println(user.DeviceID)
 		err := firestore.AddOrUpdateUser(user)
 		if err != nil {

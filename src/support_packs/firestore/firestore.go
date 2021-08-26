@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	firebase "firebase.google.com/go"
 	"fmt"
+	"golang.org/x/mod/module"
 	"io"
 	"log"
 	"net/http"
@@ -158,6 +159,7 @@ func UpdateFirebaseCollections() error {
 		return err
 	}
 
+	records = module.Sort(records)
 	var instrument = &_struct.Instruments{}
 	for _, rec := range records {
 		instrumentType := rec[9]
