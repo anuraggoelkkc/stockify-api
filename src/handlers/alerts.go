@@ -14,7 +14,6 @@ type AlertHandler struct{
 }
 
 func (a *AlertHandler) AddAlert(c *gin.Context) {
-	fmt.Fprintf(c.Writer, "Welcome to the AddAlert!")
 	fmt.Println("Endpoint Hit: AddAlert")
 
 	var alert _struct.Alert
@@ -34,7 +33,6 @@ func (a *AlertHandler) AddAlert(c *gin.Context) {
 }
 
 func (a *AlertHandler) RemoveAlert(c *gin.Context) {
-	fmt.Fprintf(c.Writer, "Welcome to the RemoveAlert!")
 	fmt.Println("Endpoint Hit: RemoveAlert")
 
 	alertId := c.Param("alertID")

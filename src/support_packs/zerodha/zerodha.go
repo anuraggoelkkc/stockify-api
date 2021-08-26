@@ -52,7 +52,8 @@ func (z *Zerodha) RemoveAlert(id string) error {
 }
 
 func (z *Zerodha) FetchAlerts(u string) ([]_struct.Alert, error) {
-	return z.firebaseStore.FetchAlerts(u)
+	//return z.firebaseStore.FetchAlerts(u)
+	return nil,nil
 }
 
 func (z *Zerodha) ReloadInstrumentsInFirebase() error {

@@ -52,6 +52,7 @@ type Alert struct {
 	ExchangeId string `json:"exchange_token"`
 	Price float64 `json:"target_price"`
 	Direction bool `json:"direction"`
+	Symbol string `json:"symbol"`
 }
 
 type Trend struct {}

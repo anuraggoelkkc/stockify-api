@@ -5,7 +5,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"stockify-api/src/handlers"
-	"stockify-api/src/middlewares"
 	"time"
 )
 
@@ -43,7 +42,7 @@ func NewRouter() *gin.Engine {
 
 	router.GET("/health", health.Status)
 
-	router.Use(middlewares.AuthMiddleware())
+//	router.Use(middlewares.AuthMiddleware())
 
 	user := handlers.NewUserHandler()
 

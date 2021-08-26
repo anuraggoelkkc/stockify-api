@@ -14,7 +14,6 @@ type UserHandler struct{
 }
 
 func (u *UserHandler) AddUser(c *gin.Context) {
-	fmt.Fprintf(c.Writer, "Welcome to the AddUser!")
 	fmt.Println("Endpoint Hit: AddUser")
 
 	var user _struct.User

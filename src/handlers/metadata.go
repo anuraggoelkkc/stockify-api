@@ -12,7 +12,6 @@ type MetadataHandler struct{
 }
 
 func (m *MetadataHandler) ReloadInstruments(c *gin.Context) {
-	fmt.Fprintf(c.Writer, "Welcome to the ReloadInstruments!")
 	fmt.Println("Endpoint Hit: ReloadInstruments")
 
 	err := m.z.ReloadInstrumentsInFirebase()
@@ -24,13 +23,11 @@ func (m *MetadataHandler) ReloadInstruments(c *gin.Context) {
 }
 
 func (m *MetadataHandler) TrendingInstruments(c *gin.Context) {
-	fmt.Fprintf(c.Writer, "Welcome to the TrendingList!")
 	fmt.Println("Endpoint Hit: TrendingList")
 	c.String(http.StatusOK, "Working!")
 }
 
 func (m *MetadataHandler) FetchInstrumentDetails(c *gin.Context) {
-	fmt.Fprintf(c.Writer, "Welcome to the FetchInstrumentDetails!")
 	fmt.Println("Endpoint Hit: FetchInstrumentDetails")
 	exchange := c.Param("exchange")
 	symbol := c.Param("symbol")

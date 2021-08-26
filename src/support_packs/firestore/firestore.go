@@ -70,7 +70,7 @@ func (f *FireStore) AddOrUpdateUser(u _struct.User) error {
 	client, err := f.getFirebaseClient(ctx)
 	defer client.Close()
 
-	_, err = client.Collection("user").Doc(u.Id).Set(ctx, map[string]interface{}{
+	_, err = client.Collection("users").Doc(u.Id).Set(ctx, map[string]interface{}{
 		"ID": u.Id,
 		"Name": u.Name,
 		"Email": u.Email,
@@ -83,7 +83,8 @@ func (f *FireStore) AddOrUpdateUser(u _struct.User) error {
 	return err
 }
 
-func (f *FireStore) FetchAlerts(u string) ([]_struct.Alert, error) {
+/*func (f *FireStore) FetchAlerts(u string) ([]_struct.Alert, error) {
+
 	//Create Firebase client
 	ctx := context.Background()
 	client, err := f.getFirebaseClient(ctx)
@@ -98,7 +99,7 @@ func (f *FireStore) FetchAlerts(u string) ([]_struct.Alert, error) {
 	err = dsnap.DataTo(&existingAlerts)
 	fmt.Printf("Document data: %#v\n", existingAlerts)
 	return existingAlerts, err
-}
+}*/
 
 func (f *FireStore) AddAlert(a _struct.Alert) error {
 	//Create Firebase client
@@ -106,45 +107,15 @@ func (f *FireStore) AddAlert(a _struct.Alert) error {
 	client, err := f.getFirebaseClient(ctx)
 	defer client.Close()
 
-
 	//Add new Alert to alert collection
-	document, _, err := client.Collection("alert").Add(ctx, map[string]interface{}{
+	_, _, err = client.Collection("alert").Add(ctx, map[string]interface{}{
 		"Alert": a,
 	})
 	if err != nil {
 		log.Panicf("Failed adding/updating alerts: %v", err)
 		return err
-	} else {
-		//Add this alert to user_alert collection
-
-		//Get Existing alerts for user
-		dsnap, err := client.Collection("user_alert").Doc(a.UserId).Get(ctx)
-		if err != nil {
-			return err
-		}
-		var existingAlerts []_struct.Alert
-		err = dsnap.DataTo(&existingAlerts)
-		fmt.Printf("Document data: %#v\n", existingAlerts)
-		if err != nil {
-			return err
-		}
-
-		//Add new alert to existing alert
-		a.Id = document.ID
-		existingAlerts = append(existingAlerts, a)
-
-		//Update user_alert collection
-		_, err = client.Collection("user_alert").Doc(a.UserId).Set(ctx, map[string]interface{}{
-			"Alerts": existingAlerts,
-		})
-
-		if err != nil {
-			return err
-		} else {
-			//TODO: Update cache to notification service
-			return nil
-		}
 	}
+	return nil
 }
 
 func remove(s []_struct.Alert, i int) []_struct.Alert {
@@ -158,54 +129,12 @@ func (f *FireStore) RemoveAlert(id string) error {
 	client, err := f.getFirebaseClient(ctx)
 	defer client.Close()
 
-	//Lookup
-	dsnap, err := client.Collection("alert").Doc(id).Get(ctx)
-	if err != nil {
-		return err
-	}
-
-	var alert _struct.Alert
-	err = dsnap.DataTo(&alert)
-	fmt.Printf("Document data: %#v\n", alert)
-
-	if err != nil {
-		return err
-	}
-
 	_, err = client.Collection("alert").Doc(id).Delete(ctx)
 	if err != nil {
 		// Handle any errors in an appropriate way, such as returning them.
 		log.Printf("An error has occurred: %s", err)
 	}
 
-	dsnap, err = client.Collection("user_alert").Doc(alert.UserId).Get(ctx)
-	if err != nil {
-		return err
-	}
-
-	var existingAlerts []_struct.Alert
-	err = dsnap.DataTo(&existingAlerts)
-	fmt.Printf("Document data: %#v\n", existingAlerts)
-	if err != nil {
-		return err
-	}
-
-	idx := 0
-	for idx < len(existingAlerts) {
-		if existingAlerts[idx].Id == alert.Id {
-			existingAlerts = remove(existingAlerts, idx)
-			break
-		}
-	}
-
-	//Update user_alert collection
-	_, err = client.Collection("user_alert").Doc(alert.UserId).Set(ctx, map[string]interface{}{
-		"Alerts": existingAlerts,
-	})
-
-	if err != nil {
-		return err
-	}
 	//TODO: Remove from notification cache
 	return nil
 }
