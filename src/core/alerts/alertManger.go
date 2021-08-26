@@ -6,7 +6,7 @@ type AlertManger struct {
 	channels map[ChannelType]AlertChannel
 }
 
-func (a *AlertManger) AddFCMKey(apiKey string) {
+func (a *AlertManger) AddFirebaseKeyPath(apiKey string) {
 	channel := FCMChannel{}
 	channel.AddProperty("apiKey", apiKey)
 	a.channels[ChannelTypeFCM] = &channel

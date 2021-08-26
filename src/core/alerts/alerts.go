@@ -23,11 +23,10 @@ func (t *AlertTrigger) Validate() error {
 }
 
 type alert struct {
-	AlertName          string
-	AlertTopic         string
-	RecevierId         []string
-	SubscribedChannels []ChannelType
-	TriggerLogic       AlertTrigger
+	AlertName    string
+	AlertTopic   string
+	ReceiverId   map[ChannelType][]string
+	TriggerLogic AlertTrigger
 }
 
 func AlertBuilder() *alert {
@@ -49,24 +48,14 @@ func (a *alert) Trigger(triggerLogic AlertTrigger) *alert {
 	return a
 }
 
-func (a *alert) ReceiverId(recieverId string) *alert {
-	a.RecevierId = append(a.RecevierId, recieverId)
+func (a *alert) EnableAlerts(receiverIdMap map[ChannelType][]string) *alert {
+	a.ReceiverId = receiverIdMap
 	return a
 }
 
-func (a *alert) ReceiverIds(recieverId ...string) *alert {
-	a.RecevierId = append(a.RecevierId, recieverId...)
-	return a
-}
-
-func (a *alert) EnableFCMAlerts() *alert {
-	a.SubscribedChannels = append(a.SubscribedChannels, ChannelTypeFCM)
-	return a
-}
-
-func (a *alert) EnableEmailAlerts() *alert {
-	a.SubscribedChannels = append(a.SubscribedChannels, ChannelTypeFCM)
-	return a
+// Save to db, implment this
+func (a *alert) saveToDB() error {
+	return nil
 }
 
 func (a *alert) Build() (alert, error) {
