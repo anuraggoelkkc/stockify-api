@@ -9,7 +9,7 @@ type AlertManger struct {
 func (a *AlertManger) AddFCMKey(apiKey string) {
 	channel := FCMChannel{}
 	channel.AddProperty("apiKey", apiKey)
-	a.channels[FCMChannelType] = &channel
+	a.channels[ChannelTypeFCM] = &channel
 }
 
 func (a *AlertManger) AddTopic(topic string) {

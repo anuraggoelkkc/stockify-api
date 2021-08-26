@@ -3,8 +3,9 @@ package alerts
 type ChannelType string
 
 const (
-	FCMChannelType   ChannelType = "fcm"
-	EmailChannelType ChannelType = "email"
+	ChannelTypeFCM   ChannelType = "fcm"
+	ChannelTypeEmail ChannelType = "email"
+	ChannelTypeSMS   ChannelType = "sms"
 )
 
 type AlertChannel interface {
@@ -28,5 +29,15 @@ type MailChannel struct {
 
 func (m *MailChannel) AddProperty(s string, i interface{}) error {
 	m.apiKey = i.(string)
+	return nil
+}
+
+// SMS channel
+type SMSChannel struct {
+	apiKey string
+}
+
+func (s *SMSChannel) AddProperty(k string, i interface{}) error {
+	s.apiKey = i.(string)
 	return nil
 }

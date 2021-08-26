@@ -60,7 +60,12 @@ func (a *alert) ReceiverIds(recieverId ...string) *alert {
 }
 
 func (a *alert) EnableFCMAlerts() *alert {
-	a.SubscribedChannels = append(a.SubscribedChannels, FCMChannelType)
+	a.SubscribedChannels = append(a.SubscribedChannels, ChannelTypeFCM)
+	return a
+}
+
+func (a *alert) EnableEmailAlerts() *alert {
+	a.SubscribedChannels = append(a.SubscribedChannels, ChannelTypeFCM)
 	return a
 }
 
