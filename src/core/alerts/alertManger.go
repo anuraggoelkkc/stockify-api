@@ -1,23 +1,14 @@
 package alerts
 
 type AlertManger struct {
-	topics   []string
-	alerts   map[string][]alert
-	channels map[ChannelType]AlertChannel
+	alerts   map[string][]alert           //cache alerts
+	channels map[ChannelType]AlertChannel //cache channels
 }
 
 func (a *AlertManger) AddFirebaseKeyPath(apiKey string) {
 	channel := FCMChannel{}
 	channel.AddProperty("apiKey", apiKey)
 	a.channels[ChannelTypeFCM] = &channel
-}
-
-func (a *AlertManger) AddTopic(topic string) {
-	a.topics = append(a.topics, topic)
-}
-
-func (a *AlertManger) AddTopics(topics ...string) {
-	a.topics = append(a.topics, topics...)
 }
 
 func (a *AlertManger) SetAlert(alertObj alert) {
@@ -28,6 +19,17 @@ func (a *AlertManger) SetAlert(alertObj alert) {
 	}
 }
 
+//ToDo: Implement this, load alerts from db to cache
+func (a *AlertManger) loadAlerts() {
+
+}
+
+// ToDo:Implement this, these worker pool will listen to push data and send message to notification queue
+func (a *AlertManger) StartWorkers() {
+
+}
+
+//This method is called by producer and checked with alerts data
 func (a *AlertManger) pushData(alertTopic string, key string, value interface{}) {
 	//ToDo, make it concurrent and modular using goroutines
 	if _, ok := a.alerts[alertTopic]; ok == true {
@@ -61,5 +63,7 @@ func ProcessTrigger(value1, value2 int, operator string) bool {
 
 func GetAlertManager() *AlertManger {
 	alertManager := new(AlertManger)
+	alertManager.loadAlerts() // load previously stored alert
+	StartNotificationWorker() // Start Notification workers
 	return alertManager
 }

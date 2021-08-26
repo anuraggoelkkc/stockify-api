@@ -58,6 +58,11 @@ func (a *alert) saveToDB() error {
 	return nil
 }
 
+// Remove alert from db, implment this
+func (a *alert) removeAlert(alertName string) error {
+	return nil
+}
+
 func (a *alert) Build() (alert, error) {
 	if a.AlertName == "" {
 		return alert{}, errors.New("Name not defined")
