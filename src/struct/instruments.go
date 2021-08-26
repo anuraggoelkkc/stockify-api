@@ -9,6 +9,11 @@ type Instruments struct {
 	Exchange string `json:"exchange"`
 }
 
+type InstrumentDetailResponse struct {
+	Status string `json:"status"`
+	Data map[string]InstrumentDetail `json:"data"`
+}
+
 type InstrumentDetail struct {
 	InstrumentToken   int     `json:"instrument_token"`
 	Timestamp         string  `json:"timestamp"`

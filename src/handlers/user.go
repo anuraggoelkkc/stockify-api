@@ -2,16 +2,18 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	_struct "stockify-api/src/struct"
 	"stockify-api/src/support_packs/firestore"
 )
 
-type UserHandler struct{}
+type UserHandler struct{
+	f *firestore.FireStore
+}
 
-func (u UserHandler) AddUser(c *gin.Context) {
+func (u *UserHandler) AddUser(c *gin.Context) {
 	fmt.Fprintf(c.Writer, "Welcome to the AddUser!")
 	fmt.Println("Endpoint Hit: AddUser")
 
@@ -19,7 +21,7 @@ func (u UserHandler) AddUser(c *gin.Context) {
 	if c.ShouldBind(&user) == nil && len(user.Id) > 0 {
 		log.Println(user.Id)
 		log.Println(user.DeviceID)
-		err := firestore.AddOrUpdateUser(user)
+		err := u.f.AddOrUpdateUser(user)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		} else {
@@ -27,5 +29,11 @@ func (u UserHandler) AddUser(c *gin.Context) {
 		}
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid user object passed"})
+	}
+}
+
+func NewUserHandler() *UserHandler {
+	return &UserHandler{
+		f : firestore.NewFireStore("","","","",""),
 	}
 }

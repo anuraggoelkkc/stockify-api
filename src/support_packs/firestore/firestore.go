@@ -4,10 +4,11 @@ import (
 	"cloud.google.com/go/firestore"
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	firebase "firebase.google.com/go"
 	"fmt"
-	"golang.org/x/mod/module"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -16,9 +17,9 @@ import (
 	"strings"
 )
 
-func downloadInstrumentCSV(filepath string, url string) (err error) {
+func (f *FireStore) DownloadInstrumentCSV() (err error) {
 	// Create the file
-	out, err := os.Create(os.ExpandEnv(filepath))
+	out, err := os.Create(os.ExpandEnv(f.instrumentListFileLocation))
 	if err != nil  {
 		return err
 	}
@@ -26,12 +27,12 @@ func downloadInstrumentCSV(filepath string, url string) (err error) {
 
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", f.instrumentListUrl, nil)
 	if err != nil {
 		log.Panic(err)
 	}
 	req.Header.Set("X-Kite-Version", "3")
-	req.Header.Set("Authorization", "token api_key:YsQ3Nw9Uf8yA2TbJtmQfQKYHo3m8Kw7P")
+	req.Header.Set("Authorization", "token "+f.clientApiKey+":"+f.clientAccessToken)
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
 
@@ -49,7 +50,7 @@ func downloadInstrumentCSV(filepath string, url string) (err error) {
 	return nil
 }
 
-func getFirebaseClient(ctx context.Context) (*firestore.Client, error) {
+func (f *FireStore) getFirebaseClient(ctx context.Context) (*firestore.Client, error) {
 	// Use a service account
 	conf := &firebase.Config{ProjectID: "stockify-8407f"}
 	app, err := firebase.NewApp(ctx, conf)
@@ -63,14 +64,14 @@ func getFirebaseClient(ctx context.Context) (*firestore.Client, error) {
 	return client, err
 }
 
-func AddOrUpdateUser(u _struct.User) error {
+func (f *FireStore) AddOrUpdateUser(u _struct.User) error {
 	//Create Firebase client
 	ctx := context.Background()
-	client, err := getFirebaseClient(ctx)
+	client, err := f.getFirebaseClient(ctx)
 	defer client.Close()
 
-	_, err = client.Collection("user").Doc(u.ID).Set(ctx, map[string]interface{}{
-		"ID": u.ID,
+	_, err = client.Collection("user").Doc(u.Id).Set(ctx, map[string]interface{}{
+		"ID": u.Id,
 		"Name": u.Name,
 		"Email": u.Email,
 		"DeviceID": u.DeviceID,
@@ -82,10 +83,10 @@ func AddOrUpdateUser(u _struct.User) error {
 	return err
 }
 
-func FetchAlerts(u string) ([]_struct.Alert, error) {
+func (f *FireStore) FetchAlerts(u string) ([]_struct.Alert, error) {
 	//Create Firebase client
 	ctx := context.Background()
-	client, err := getFirebaseClient(ctx)
+	client, err := f.getFirebaseClient(ctx)
 	defer client.Close()
 
 	//Get Existing alerts for user
@@ -99,17 +100,89 @@ func FetchAlerts(u string) ([]_struct.Alert, error) {
 	return existingAlerts, err
 }
 
-func AddAlert(a _struct.Alert) error {
+func (f *FireStore) AddAlert(a _struct.Alert) error {
 	//Create Firebase client
 	ctx := context.Background()
-	client, err := getFirebaseClient(ctx)
+	client, err := f.getFirebaseClient(ctx)
 	defer client.Close()
 
-	//Get Existing alerts for user
-	dsnap, err := client.Collection("user_alert").Doc(a.User_ID).Get(ctx)
+
+	//Add new Alert to alert collection
+	document, _, err := client.Collection("alert").Add(ctx, map[string]interface{}{
+		"Alert": a,
+	})
+	if err != nil {
+		log.Panicf("Failed adding/updating alerts: %v", err)
+		return err
+	} else {
+		//Add this alert to user_alert collection
+
+		//Get Existing alerts for user
+		dsnap, err := client.Collection("user_alert").Doc(a.UserId).Get(ctx)
+		if err != nil {
+			return err
+		}
+		var existingAlerts []_struct.Alert
+		err = dsnap.DataTo(&existingAlerts)
+		fmt.Printf("Document data: %#v\n", existingAlerts)
+		if err != nil {
+			return err
+		}
+
+		//Add new alert to existing alert
+		a.Id = document.ID
+		existingAlerts = append(existingAlerts, a)
+
+		//Update user_alert collection
+		_, err = client.Collection("user_alert").Doc(a.UserId).Set(ctx, map[string]interface{}{
+			"Alerts": existingAlerts,
+		})
+
+		if err != nil {
+			return err
+		} else {
+			//TODO: Update cache to notification service
+			return nil
+		}
+	}
+}
+
+func remove(s []_struct.Alert, i int) []_struct.Alert {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
+}
+
+func (f *FireStore) RemoveAlert(id string) error {
+	//Create Firebase client
+	ctx := context.Background()
+	client, err := f.getFirebaseClient(ctx)
+	defer client.Close()
+
+	//Lookup
+	dsnap, err := client.Collection("alert").Doc(id).Get(ctx)
 	if err != nil {
 		return err
 	}
+
+	var alert _struct.Alert
+	err = dsnap.DataTo(&alert)
+	fmt.Printf("Document data: %#v\n", alert)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = client.Collection("alert").Doc(id).Delete(ctx)
+	if err != nil {
+		// Handle any errors in an appropriate way, such as returning them.
+		log.Printf("An error has occurred: %s", err)
+	}
+
+	dsnap, err = client.Collection("user_alert").Doc(alert.UserId).Get(ctx)
+	if err != nil {
+		return err
+	}
+
 	var existingAlerts []_struct.Alert
 	err = dsnap.DataTo(&existingAlerts)
 	fmt.Printf("Document data: %#v\n", existingAlerts)
@@ -117,32 +190,63 @@ func AddAlert(a _struct.Alert) error {
 		return err
 	}
 
-	//Add new alert to existing alert
-	existingAlerts = append(existingAlerts, a)
+	idx := 0
+	for idx < len(existingAlerts) {
+		if existingAlerts[idx].Id == alert.Id {
+			existingAlerts = remove(existingAlerts, idx)
+			break
+		}
+	}
 
-	_, err = client.Collection("user_alert").Doc(a.User_ID).Set(ctx, map[string]interface{}{
+	//Update user_alert collection
+	_, err = client.Collection("user_alert").Doc(alert.UserId).Set(ctx, map[string]interface{}{
 		"Alerts": existingAlerts,
 	})
+
 	if err != nil {
-		log.Panicf("Failed adding/updating alerts: %v", err)
 		return err
 	}
-	return err
+	//TODO: Remove from notification cache
+	return nil
 }
 
-//func RemoveAlert()
+func (f *FireStore) UpdateInstrumentDetailToFireStore(o _struct.InstrumentDetail) error {
 
-func UpdateFirebaseCollections() error {
-	//Download CSV
-	err := downloadInstrumentCSV("$HOME/stockify-api/instruments.csv","https://api.kite.trade/instruments")
+	return nil
+}
+
+func (f *FireStore) FetchInstrumentDetails(instrument string) (_struct.InstrumentDetail, error) {
+	client := &http.Client{}
+	url := f.instrumentDetailUrl
+	res := _struct.InstrumentDetail{}
+	url = strings.Replace(url, "EXCHANGE:SYMBOL", instrument, -1)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Panic(err)
-		return err
 	}
+	req.Header.Set("X-Kite-Version", "3")
+	req.Header.Set("Authorization", "token "+f.clientApiKey+":"+f.clientAccessToken)
+	resp, err := client.Do(req)
+	defer resp.Body.Close()
+
+	// Check server response
+	if resp.StatusCode != http.StatusOK {
+		return res, fmt.Errorf("unable to fetch details: %s", resp.Status)
+	}
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	var instrumentResp _struct.InstrumentDetailResponse
+	err = json.Unmarshal(bodyBytes, &instrumentResp)
+	if err == nil {
+		return instrumentResp.Data[instrument], nil
+	}
+	return res, nil
+}
+
+func (f *FireStore) UpdateFirebaseCollections() error {
 
 	//Create Firebase client
 	ctx := context.Background()
-	client, err := getFirebaseClient(ctx)
+	client, err := f.getFirebaseClient(ctx)
 	defer client.Close()
 
 	//Open File
@@ -159,13 +263,16 @@ func UpdateFirebaseCollections() error {
 		return err
 	}
 
-	records = module.Sort(records)
 	var instrument = &_struct.Instruments{}
+	var validEntries = 500
 	for _, rec := range records {
 		instrumentType := rec[9]
+		if validEntries <= 0 {
+			break
+		}
 		if strings.EqualFold(instrumentType, "EQ") {
-			instrument.Instrument_ID = rec[0]
-			instrument.Exchange_ID = rec[1]
+			instrument.InstrumentID = rec[0]
+			instrument.ExchangeID = rec[1]
 			instrument.Symbol = rec[2]
 			instrument.Name = rec[3]
 			if price, err := strconv.ParseFloat(rec[4], 64); err == nil {
@@ -174,9 +281,9 @@ func UpdateFirebaseCollections() error {
 			instrument.Exchange = rec[11]
 
 			if len(instrument.Name) > 0 && (strings.EqualFold(instrument.Exchange, "BSE") || strings.EqualFold(instrument.Exchange, "NSE")) {
-				_, err = client.Collection("instruments").Doc(instrument.Instrument_ID).Set(ctx, map[string]interface{}{
-					"Instrument_ID": instrument.Instrument_ID,
-					"Exchange_ID": instrument.Exchange_ID,
+				_, err = client.Collection("instruments").Doc(instrument.InstrumentID).Set(ctx, map[string]interface{}{
+					"Instrument_ID": instrument.InstrumentID,
+					"Exchange_ID": instrument.ExchangeID,
 					"Symbol": instrument.Symbol,
 					"Name": instrument.Name,
 					"Price": instrument.Price,
@@ -185,15 +292,29 @@ func UpdateFirebaseCollections() error {
 				if err != nil {
 					log.Panicf("Failed updating instruments collection: %v", err)
 					return err
+				} else {
+					validEntries--
 				}
 			}
-
 		}
 	}
-
 	return nil
 }
 
-func Init(){
-	UpdateFirebaseCollections()
+type FireStore struct {
+	clientApiKey string
+	clientAccessToken string
+	instrumentListUrl string
+	instrumentDetailUrl string
+	instrumentListFileLocation string
+}
+
+func NewFireStore(apiKey string, accessToken string, instrumentListUrl string, instrumentDetailUrl string, instrumentListFileLocation string) *FireStore {
+	return &FireStore{
+		clientApiKey:      apiKey,
+		clientAccessToken:  accessToken,
+		instrumentListUrl: instrumentListUrl,
+		instrumentDetailUrl: instrumentDetailUrl,
+		instrumentListFileLocation: instrumentListFileLocation,
+	}
 }

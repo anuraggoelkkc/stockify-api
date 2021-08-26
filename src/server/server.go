@@ -8,6 +8,7 @@ const PORT = ":80"
 
 func Init() {
 	r := NewRouter()
-	zerodha.Init()
+	z := zerodha.NewZerodha()
+	z.Init()
 	r.Run(PORT)
 }
