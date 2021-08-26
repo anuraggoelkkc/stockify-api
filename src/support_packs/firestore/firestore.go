@@ -91,7 +91,7 @@ func (f *FireStore) AddOrUpdateUser(u _struct.User) error {
 	defer client.Close()
 
 	//Get Existing alerts for user
-	dsnap, err := client.Collection("user_alert").Doc(u).Get(ctx)
+	query := client.Collection("alert").Where("UserId", "==", u)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,15 @@ func (f *FireStore) AddAlert(a _struct.Alert) error {
 
 	//Add new Alert to alert collection
 	_, _, err = client.Collection("alert").Add(ctx, map[string]interface{}{
-		"Alert": a,
+		"ID": a.Id,
+		"UserId": a.UserId,
+		"InstrumentId": a.InstrumentId,
+		"ExchangeId": a.ExchangeId,
+		"Price": a.Price,
+		"Direction": a.Direction,
+		"Symbol": a.Symbol,
+		"Exchange": a.Exchange,
+		"Name": a.Name,
 	})
 	if err != nil {
 		log.Panicf("Failed adding/updating alerts: %v", err)
