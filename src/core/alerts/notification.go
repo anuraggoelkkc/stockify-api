@@ -3,17 +3,20 @@ package alerts
 import (
 	"github.com/appleboy/go-fcm"
 	"log"
-	"runtime"
-	"time"
 )
 
 const (
-	MaxWorker = 10
+	MaxNotificationWorker = 10
 )
 
-var notificationWorkerPool workerPool
+var notificationWorkerPool WorkerPool
 
-func SendFCMNotification(title, body, device_token string) {
+//Todo: Implement this
+func TriggerFCMNotification(recevierIds []string) {
+
+}
+
+func sendFCMNotification(title, body, device_token string) {
 	notificationWorkerPool.AddTask(func() {
 		msg := &fcm.Message{
 			To: device_token,
@@ -44,18 +47,18 @@ func SendFCMNotification(title, body, device_token string) {
 func StartNotificationWorker() {
 
 	// For monitoring purpose.
-	waitC := make(chan bool)
-
-	go func() {
-		for {
-			log.Printf("[main] Total current goroutine: %d", runtime.NumGoroutine())
-			time.Sleep(1 * time.Second)
-		}
-	}()
+	//waitC := make(chan bool)
+	//
+	//go func() {
+	//	for {
+	//		log.Printf("[main] Total current goroutine: %d", runtime.NumGoroutine())
+	//		time.Sleep(1 * time.Second)
+	//	}
+	//}()
 
 	// Start Worker Pool.
-	wp := NewWorkerPool(MaxWorker)
-	wp.Run()
+	notificationWorkerPool = NewWorkerPool(MaxNotificationWorker)
+	notificationWorkerPool.Run()
 
-	<-waitC
+	//<-waitC
 }

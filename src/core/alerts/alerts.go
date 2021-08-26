@@ -25,7 +25,7 @@ func (t *AlertTrigger) Validate() error {
 type alert struct {
 	AlertName    string
 	AlertTopic   string
-	ReceiverId   map[ChannelType][]string
+	ReceiverIds  map[ChannelType][]string
 	TriggerLogic AlertTrigger
 }
 
@@ -49,7 +49,7 @@ func (a *alert) Trigger(triggerLogic AlertTrigger) *alert {
 }
 
 func (a *alert) EnableAlerts(receiverIdMap map[ChannelType][]string) *alert {
-	a.ReceiverId = receiverIdMap
+	a.ReceiverIds = receiverIdMap
 	return a
 }
 
