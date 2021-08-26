@@ -4,7 +4,7 @@ import (
 	"stockify-api/src/support_packs/zerodha"
 )
 
-const PORT = ":80"
+const PORT = ":8080"
 
 func Init() {
 	r := NewRouter()
