@@ -15,7 +15,7 @@ const (
 func (z *Zerodha) getAccessToken(client *kiteconnect.Client) string {
 	if client != nil {
 		fmt.Println(client.GetLoginURL())
-		requestToken := "l3BmkpNTUNOoEwtAQTag72iYRnvUo97k"
+		requestToken := "RlX5tNNzFBfF1YwH4HOqgbJU6WzTFgxo"
 		// Get user details and access token
 		data, err := client.GenerateSession(requestToken, apiSecret)
 		if err != nil {
@@ -25,7 +25,7 @@ func (z *Zerodha) getAccessToken(client *kiteconnect.Client) string {
 			return data.AccessToken
 		}
 	} else {
-		return "28VhkzVgY1OEKDMzFbhhC1FCh0g8vnqd"//need to update access token daily
+		return "cy0zgoJ1QYpGv4MSvtN9tHswKGggCK4v"//need to update access token daily
 	}
 }
 
@@ -70,7 +70,7 @@ type Zerodha struct {
 
 func NewZerodha() *Zerodha {
 	return &Zerodha{
-		firebaseStore: firestore.NewFireStore(apiKey, "28VhkzVgY1OEKDMzFbhhC1FCh0g8vnqd", "https://api.kite.trade/instruments", "https://api.kite.trade/quote?i=EXCHANGE:SYMBOL", "$HOME/stockify-api/instruments.csv"),
+		firebaseStore: firestore.NewFireStore(apiKey, "cy0zgoJ1QYpGv4MSvtN9tHswKGggCK4v", "https://api.kite.trade/instruments", "https://api.kite.trade/quote?i=EXCHANGE:SYMBOL", "$HOME/stockify-api/instruments.csv"),
 	}
 }
 
